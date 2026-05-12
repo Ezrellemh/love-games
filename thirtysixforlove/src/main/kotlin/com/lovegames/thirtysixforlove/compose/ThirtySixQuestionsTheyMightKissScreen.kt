@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,12 +23,13 @@ import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModelViewModel
-import com.lovegames.thritysixforlove.R
+import com.lovegames.common.MoreGamesButton
+import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModel
+import com.lovegames.thirtysixforlove.R
 
 @Composable
 fun ThirtySixQuestionsTheyMightKissScreen(
-    viewModel: ThirtySixQuestionsViewModelViewModel,
+    viewModel: ThirtySixQuestionsViewModel,
     navController: NavController
 ) {
     val context = LocalContext.current
@@ -76,14 +76,14 @@ fun ThirtySixQuestionsTheyMightKissScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
+        // Shared More Games CTA — shows an interstitial ad, then
+        // resets this game's state and returns to the home screen.
+        MoreGamesButton(
+            onAdClosed = {
                 viewModel.resetViewModel()
                 navController.navigate("main_screen")
             }
-        ) {
-            Text(text = stringResource(R.string.thirty_six_questions_more_games))
-        }
+        )
     }
 }
 
@@ -91,7 +91,7 @@ fun ThirtySixQuestionsTheyMightKissScreen(
 @Composable
 fun ThirtySixQuestionsTheyMightKissScreenPreview() {
     ThirtySixQuestionsTheyMightKissScreen(
-        viewModel = ThirtySixQuestionsViewModelViewModel(),
+        viewModel = ThirtySixQuestionsViewModel(),
         navController = NavController(LocalContext.current)
     )
 }

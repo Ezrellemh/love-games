@@ -5,7 +5,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModelViewModel
+import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModel
 import com.lovegames.thirtysixforlove.compose.ThirtySixQuestionsCongratulationsScreen
 import com.lovegames.thirtysixforlove.compose.ThirtySixQuestionsDisclaimerScreen
 import com.lovegames.thirtysixforlove.compose.ThirtySixQuestionsInstructionsScreen
@@ -15,7 +15,7 @@ import com.lovegames.thirtysixforlove.compose.ThirtySixQuestionsTheyMightKissScr
 
 @Composable
 fun NavigationComponent(navController: NavHostController) {
-    val thirtySixQuestionsViewModelViewModel: ThirtySixQuestionsViewModelViewModel = viewModel()
+    val thirtySixQuestionsViewModelViewModel: ThirtySixQuestionsViewModel = viewModel()
     NavHost(navController = navController, startDestination = "main_screen") {
         composable("main_screen") {
             MainScreen(navController)

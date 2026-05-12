@@ -10,27 +10,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModelViewModel
+import com.lovegames.common.MoreGamesButton
+import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModel
 import com.lovegames.thirtysixforlove.TimerCompletionAction
 import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsState
-import com.lovegames.thritysixforlove.R
+import com.lovegames.thirtysixforlove.R
 
 @Composable
 fun ThirtySixQuestionsCongratulationsScreen(
-    viewModel: ThirtySixQuestionsViewModelViewModel,
+    viewModel: ThirtySixQuestionsViewModel,
     navController: NavController
 ) {
     val state = viewModel.state().collectAsState().value
 
     when (state) {
         is ThirtySixQuestionsState.Content -> {
-            ThirtySixQuestionsCongratulationsScreenContnent(
+            ThirtySixQuestionsCongratulationsScreenContent(
                 viewModel,
                 navController,
                 state
@@ -40,8 +43,8 @@ fun ThirtySixQuestionsCongratulationsScreen(
 }
 
 @Composable
-private fun ThirtySixQuestionsCongratulationsScreenContnent(
-    viewModel: ThirtySixQuestionsViewModelViewModel,
+private fun ThirtySixQuestionsCongratulationsScreenContent(
+    viewModel: ThirtySixQuestionsViewModel,
     navController: NavController,
     state: ThirtySixQuestionsState.Content,
 ) {
@@ -63,7 +66,19 @@ private fun ThirtySixQuestionsCongratulationsScreenContnent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .pointerInput(Unit) {
+                // Observe at the Initial pass so we toggle fast-forward without
+                // consuming the touch — the timer heart / buttons still react
+                // to their own taps. While any pointer is down, the stare timer
+                // runs at 2x speed.
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        viewModel.setFastForward(event.changes.any { it.pressed })
+                    }
+                }
+            },
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -117,16 +132,16 @@ private fun ThirtySixQuestionsCongratulationsScreenContnent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = {
+            // Shared More Games CTA — shows an interstitial ad, then
+            // resets this game's state and returns to the home screen.
+            MoreGamesButton(
+                onAdClosed = {
                     if (state.timerCompleted) {
                         viewModel.resetViewModel()
                         navController.navigate("main_screen")
                     }
                 }
-            ) {
-                Text(text = stringResource(R.string.thirty_six_questions_more_games))
-            }
+            )
         }
     }
 }
@@ -135,7 +150,7 @@ private fun ThirtySixQuestionsCongratulationsScreenContnent(
 @Composable
 fun ThirtySixQuestionsCongratulationsScreenPreview() {
     ThirtySixQuestionsCongratulationsScreen(
-        viewModel = ThirtySixQuestionsViewModelViewModel(),
+        viewModel = ThirtySixQuestionsViewModel(),
         navController = NavController(LocalContext.current)
     )
 }

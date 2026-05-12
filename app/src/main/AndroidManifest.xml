@@ -11,7 +11,19 @@ xmlns:tools="http://schemas.android.com/tools">
     android:roundIcon="@mipmap/ic_launcher_round"
     android:supportsRtl="true"
     android:theme="@style/Theme.LoveGames"
-    tools:targetApi="31">
+    tools:targetApi="34">
+
+    <!--
+        AdMob application ID. The value below is Google's official test
+        application ID, safe to use during development. Replace with your
+        real AdMob app ID before publishing to the Play Store. The
+        InterstitialAdManager's ad unit ID also defaults to a test unit
+        and must be swapped at the same time.
+    -->
+    <meta-data
+        android:name="com.google.android.gms.ads.APPLICATION_ID"
+        android:value="ca-app-pub-3940256099942544~3347511713" />
+
     <activity
         android:name=".MainActivity"
         android:screenOrientation="portrait"

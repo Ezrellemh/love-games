@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +34,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModelViewModel
+import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModel
 import com.lovegames.thirtysixforlove.TimerCompletionAction
 import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsState
 import kotlin.math.cos
@@ -43,7 +44,7 @@ import kotlin.math.sin
 // https://youtu.be/2mKhmMrt2Ok?si=DOQHxX3FBVGaRq6q
 @Composable
 fun Timer(
-    viewModel: ThirtySixQuestionsViewModelViewModel,
+    viewModel: ThirtySixQuestionsViewModel,
     handleColor: Color,
     inactiveBarColor: Color,
     activeBarColor: Color,
@@ -63,10 +64,12 @@ fun Timer(
     var timerVisibility by remember { mutableStateOf(1f) }
 
     // Listen to TimerCompletionAction changes and rotate the timer if RotateTimer action is triggered
-    when (action) {
-        is TimerCompletionAction.RotateTimer-> { rotationAngle = 180f }
-        is TimerCompletionAction.DismissTimer -> { timerVisibility = 0f }
-        else -> {}
+    LaunchedEffect(action) {
+        when (action) {
+            is TimerCompletionAction.RotateTimer -> { rotationAngle = 180f }
+            is TimerCompletionAction.DismissTimer -> { timerVisibility = 0f }
+            else -> {}
+        }
     }
 
     // Use alpha to control visibility (0f for hidden, 1f for visible)
@@ -123,7 +126,7 @@ fun Timer(
             )
         }
 
-        if (currentTime == 0L || currentTime == 240000L) {
+        if (currentTime == 0L || currentTime == totalTime) {
             // Show heart Icon
             IconButton(
                 onClick = { viewModel.toggleTimer(TimerCompletionAction.DoNothing) },

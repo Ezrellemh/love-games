@@ -34,6 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -44,14 +46,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModelViewModel
+import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModel
 import com.lovegames.thirtysixforlove.TimerCompletionAction
 import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsState
-import com.lovegames.thritysixforlove.R
+import com.lovegames.thirtysixforlove.R
 
 @Composable
 fun ThirtySixQuestionsMainScreen(
-    viewModel: ThirtySixQuestionsViewModelViewModel,
+    viewModel: ThirtySixQuestionsViewModel,
     navController: NavController
 ) {
     val state = viewModel.state().collectAsState().value
@@ -69,7 +71,7 @@ fun ThirtySixQuestionsMainScreen(
 @Composable
 private fun ThirtySixQuestionsMainScreenContent(
     state: ThirtySixQuestionsState.Content,
-    viewModel: ThirtySixQuestionsViewModelViewModel,
+    viewModel: ThirtySixQuestionsViewModel,
     navController: NavController
 ) {
     val currentQuestionIndex = state.currentQuestionIndex
@@ -142,8 +144,25 @@ private fun ThirtySixQuestionsMainScreenContent(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                // Observe every touch at the Initial pass so we see it before
+                // children (back/forward/symmetry buttons) without consuming it —
+                // they still get their own events as normal. While any pointer
+                // is down anywhere on the screen, the timer runs at 2x.
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        viewModel.setFastForward(event.changes.any { it.pressed })
+                    }
+                }
+            }
     ) {
+        // Subtle, themed background icon for the current question.
+        // Rendered first so it sits behind all other content.
+        QuestionBackground(questionIndex = currentQuestionIndex)
+
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
@@ -363,7 +382,7 @@ fun CustomSnackbarHost(
 @Composable
 fun QuestionScreenPreview() {
     ThirtySixQuestionsMainScreen(
-        viewModel = ThirtySixQuestionsViewModelViewModel(),
+        viewModel = ThirtySixQuestionsViewModel(),
         navController = rememberNavController()
     )
 }

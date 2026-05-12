@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsState
-import com.lovegames.thritysixforlove.R
+import com.lovegames.thirtysixforlove.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class ThirtySixQuestionsViewModelViewModel : ViewModel() {
+class ThirtySixQuestionsViewModel : ViewModel() {
     private val questions = listOf(
         R.string.question_1,
         R.string.question_2,
@@ -63,6 +63,14 @@ class ThirtySixQuestionsViewModelViewModel : ViewModel() {
     private val _isTimerRunning = MutableStateFlow(false)
     val isTimerRunning: StateFlow<Boolean> = _isTimerRunning
 
+    // When true, the timer ticks at 2x speed. Toggled by press-and-hold on the screen.
+    private val _isFastForward = MutableStateFlow(false)
+    val isFastForward: StateFlow<Boolean> = _isFastForward
+
+    fun setFastForward(enabled: Boolean) {
+        _isFastForward.value = enabled
+    }
+
     fun toggleTimer(action: TimerCompletionAction) {
         if (_currentTime.value <= 0) {
             _currentTime.value = totalTime
@@ -79,7 +87,8 @@ class ThirtySixQuestionsViewModelViewModel : ViewModel() {
         viewModelScope.launch {
             while (_isTimerRunning.value && _currentTime.value > 0L) {
                 delay(100L)
-                _currentTime.value = (_currentTime.value - 100L).coerceAtLeast(0L)
+                val step = if (_isFastForward.value) 1000L else 100L
+                _currentTime.value = (_currentTime.value - step).coerceAtLeast(0L)
             }
             if (_currentTime.value == 0L) {
                 _isTimerRunning.value = false
@@ -192,6 +201,7 @@ class ThirtySixQuestionsViewModelViewModel : ViewModel() {
     private fun resetTimer() {
         _currentTime.value = totalTime
         _isTimerRunning.value = false
+        _isFastForward.value = false
         _thirtySixQuestionsStateFlow.update { state ->
             (state as ThirtySixQuestionsState.Content).copy(
                 playerTurnTimerCount = 0,

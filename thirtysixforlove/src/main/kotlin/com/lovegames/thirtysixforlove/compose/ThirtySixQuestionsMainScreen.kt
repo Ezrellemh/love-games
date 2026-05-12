@@ -1,6 +1,9 @@
 package com.lovegames.thirtysixforlove.compose
 
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,10 +21,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,10 +34,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -40,30 +48,37 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModel
 import com.lovegames.thirtysixforlove.TimerCompletionAction
 import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsState
+import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsTheme
 import com.lovegames.thirtysixforlove.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun ThirtySixQuestionsMainScreen(
     viewModel: ThirtySixQuestionsViewModel,
     navController: NavController
 ) {
-    val state = viewModel.state().collectAsState().value
-    when (state) {
-        is ThirtySixQuestionsState.Content -> {
-            ThirtySixQuestionsMainScreenContent(
-                state,
-                viewModel,
-                navController
-            )
+    ThirtySixQuestionsTheme {
+        val state = viewModel.state().collectAsState().value
+        when (state) {
+            is ThirtySixQuestionsState.Content -> {
+                ThirtySixQuestionsMainScreenContent(
+                    state,
+                    viewModel,
+                    navController
+                )
+            }
         }
     }
 }
@@ -80,7 +95,7 @@ private fun ThirtySixQuestionsMainScreenContent(
     val isEvenQuestion = currentQuestionIndexValue % 2 == 0
     val isOddQuestion = currentQuestionIndexValue % 2 == 1
     val isQuestion11 = currentQuestionIndex == 10
-    val color = if (isEvenQuestion || (state.playerTurnTimerCount >= 1 && isQuestion11)) Color.Magenta else Color.Red
+    val color = if (isEvenQuestion || (state.playerTurnTimerCount >= 1 && isQuestion11)) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
 
     val context = LocalContext.current
     val resources = context.resources
@@ -175,15 +190,11 @@ private fun ThirtySixQuestionsMainScreenContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    modifier = Modifier.padding(4.dp),
-                    onClick = { viewModel.previousQuestion(navController) }
-                ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_back_arrow),
-                        contentDescription = "Back"
-                    )
-                }
+                NavigationArrowButton(
+                    iconResId = R.drawable.ic_back_arrow,
+                    contentDescription = "Back",
+                    onClick = { viewModel.previousQuestion(navController) },
+                )
 
                 Box(
                     modifier = Modifier
@@ -206,13 +217,12 @@ private fun ThirtySixQuestionsMainScreenContent(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            Text(
-                                modifier = Modifier.rotate(180f),
+                            QuestionNumberLabel(
                                 text = stringResource(
                                     id = R.string.question_number,
                                     currentQuestionIndex + 1
                                 ),
-                                textAlign = TextAlign.Center
+                                isUpsideDown = true,
                             )
 
                             Spacer(modifier = Modifier.height(spacerHeightInDp))
@@ -220,9 +230,9 @@ private fun ThirtySixQuestionsMainScreenContent(
                             if (currentQuestionIndexValue == 11 && state.showTimer) {
                                 Timer(
                                     viewModel = viewModel,
-                                    handleColor = Color.Red,
-                                    inactiveBarColor = Color.Red,
-                                    activeBarColor = Color.Magenta,
+                                    handleColor = MaterialTheme.colorScheme.primary,
+                                    inactiveBarColor = MaterialTheme.colorScheme.primary,
+                                    activeBarColor = MaterialTheme.colorScheme.secondary,
                                     modifier = Modifier.size(148.dp),
                                     action = action
                                 )
@@ -230,12 +240,11 @@ private fun ThirtySixQuestionsMainScreenContent(
 
                             Spacer(modifier = Modifier.height(spacerHeightInDp))
 
-                            Text(
+                            QuestionNumberLabel(
                                 text = stringResource(
                                     id = R.string.question_number,
                                     currentQuestionIndex + 1
                                 ),
-                                textAlign = TextAlign.Center
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -247,12 +256,11 @@ private fun ThirtySixQuestionsMainScreenContent(
                         } else {
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            Text(
+                            QuestionNumberLabel(
                                 text = stringResource(
                                     id = R.string.question_number,
                                     currentQuestionIndex + 1
                                 ),
-                                textAlign = TextAlign.Center
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -265,15 +273,11 @@ private fun ThirtySixQuestionsMainScreenContent(
                     }
                 }
 
-                IconButton(
-                    modifier = Modifier.padding(4.dp),
-                    onClick = { viewModel.nextQuestion(navController) }
-                ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_forward_arrow),
-                        contentDescription = "Forward"
-                    )
-                }
+                NavigationArrowButton(
+                    iconResId = R.drawable.ic_forward_arrow,
+                    contentDescription = "Forward",
+                    onClick = { viewModel.nextQuestion(navController) },
+                )
             }
         }
 
@@ -311,9 +315,9 @@ private fun ThirtySixQuestionsMainScreenContent(
                 Column {
                     Timer(
                         viewModel = viewModel,
-                        handleColor = Color.Red,
-                        inactiveBarColor = Color.Red,
-                        activeBarColor = Color.Magenta,
+                        handleColor = MaterialTheme.colorScheme.primary,
+                        inactiveBarColor = MaterialTheme.colorScheme.primary,
+                        activeBarColor = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(148.dp),
                         action = action
                     )
@@ -350,9 +354,92 @@ fun Question(
 ) {
     Text(
         text = stringResource(id = questionResId),
-        modifier = Modifier.rotate(if (isUpsideDown) 180f else 0f),
-        textAlign = TextAlign.Center
+        modifier = Modifier
+            .rotate(if (isUpsideDown) 180f else 0f)
+            .padding(horizontal = 4.dp),
+        textAlign = TextAlign.Center,
+        style = MaterialTheme.typography.titleLarge.copy(
+            fontWeight = FontWeight.Medium,
+            lineHeight = 30.sp,
+            letterSpacing = 0.2.sp,
+        ),
+        color = MaterialTheme.colorScheme.onBackground,
     )
+}
+
+/**
+ * The small "Question N" badge displayed above/below each question.
+ * Uppercase, letter-spaced, and tinted with the theme's primary color so
+ * it reads as an accented subtitle rather than plain body text.
+ */
+@Composable
+private fun QuestionNumberLabel(
+    text: String,
+    isUpsideDown: Boolean = false,
+) {
+    Text(
+        modifier = Modifier.rotate(if (isUpsideDown) 180f else 0f),
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelMedium.copy(
+            letterSpacing = 3.sp,
+            fontWeight = FontWeight.SemiBold,
+        ),
+        color = MaterialTheme.colorScheme.primary,
+        textAlign = TextAlign.Center,
+    )
+}
+
+/**
+ * Themed circular nav arrow: soft-pink container, primary-tinted icon,
+ * subtle elevation, and a quick press-bounce. Used for both Back and
+ * Forward on the question screen.
+ */
+@Composable
+private fun NavigationArrowButton(
+    iconResId: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scope = rememberCoroutineScope()
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.88f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "nav-arrow-scale",
+    )
+
+    Surface(
+        modifier = modifier
+            .size(52.dp)
+            .graphicsLayer(scaleX = scale, scaleY = scale),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shadowElevation = 4.dp,
+        onClick = {
+            pressed = true
+            scope.launch {
+                delay(120)
+                pressed = false
+            }
+            onClick()
+        },
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = ImageVector.vectorResource(id = iconResId),
+                contentDescription = contentDescription,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(26.dp),
+            )
+        }
+    }
 }
 
 @Composable

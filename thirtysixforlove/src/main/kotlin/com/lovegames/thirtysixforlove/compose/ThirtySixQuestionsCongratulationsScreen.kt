@@ -18,10 +18,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.compose.material3.MaterialTheme
 import com.lovegames.common.MoreGamesButton
 import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModel
 import com.lovegames.thirtysixforlove.TimerCompletionAction
 import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsState
+import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsTheme
 import com.lovegames.thirtysixforlove.R
 
 @Composable
@@ -29,15 +31,16 @@ fun ThirtySixQuestionsCongratulationsScreen(
     viewModel: ThirtySixQuestionsViewModel,
     navController: NavController
 ) {
-    val state = viewModel.state().collectAsState().value
-
-    when (state) {
-        is ThirtySixQuestionsState.Content -> {
-            ThirtySixQuestionsCongratulationsScreenContent(
-                viewModel,
-                navController,
-                state
-            )
+    ThirtySixQuestionsTheme {
+        val state = viewModel.state().collectAsState().value
+        when (state) {
+            is ThirtySixQuestionsState.Content -> {
+                ThirtySixQuestionsCongratulationsScreenContent(
+                    viewModel,
+                    navController,
+                    state
+                )
+            }
         }
     }
 }
@@ -106,9 +109,9 @@ private fun ThirtySixQuestionsCongratulationsScreenContent(
             // Timer button with heart effects aka animations
             Timer(
                 viewModel = viewModel,
-                handleColor = Color.Red,
-                inactiveBarColor = Color.Red,
-                activeBarColor = Color.Magenta,
+                handleColor = MaterialTheme.colorScheme.primary,
+                inactiveBarColor = MaterialTheme.colorScheme.primary,
+                activeBarColor = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.size(200.dp),
                 action = action
             )

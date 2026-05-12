@@ -38,10 +38,10 @@ import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun QuestionBackground(questionIndex: Int) {
     val icon = iconForQuestion(questionIndex)
-    val tint = Color.Red.copy(alpha = 0.07f)
+    val tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f)
 
     Box(
         modifier = Modifier.fillMaxSize(),

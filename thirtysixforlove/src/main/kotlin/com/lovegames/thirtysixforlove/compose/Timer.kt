@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -137,7 +138,7 @@ fun Timer(
                     modifier = Modifier.size(iconSize),
                     imageVector = Icons.Default.Favorite,
                     contentDescription = "Timer",
-                    tint = Color.Red
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         } else {
@@ -149,7 +150,7 @@ fun Timer(
                 text = formatTime((currentTime / 1000L).toInt()),
                 fontSize = 44.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (isTimerRunning) Color.Red else Color.Magenta
+                color = if (isTimerRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
             )
         }
     }

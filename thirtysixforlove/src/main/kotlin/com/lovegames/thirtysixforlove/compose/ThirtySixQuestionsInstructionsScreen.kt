@@ -18,25 +18,28 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.lovegames.thirtysixforlove.R
+import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsTheme
 
 
 @Composable
 fun ThirtySixQuestionsInstructionsScreen(navController: NavController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(R.string.thirty_six_questions_instructions),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(16.dp)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { navController.navigate("thirty_six_questions_screen") }) {
-            Text(text = stringResource(R.string.sounds_good))
+    ThirtySixQuestionsTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.thirty_six_questions_instructions),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(16.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = { navController.navigate("thirty_six_questions_screen") }) {
+                Text(text = stringResource(R.string.sounds_good))
+            }
         }
     }
 }

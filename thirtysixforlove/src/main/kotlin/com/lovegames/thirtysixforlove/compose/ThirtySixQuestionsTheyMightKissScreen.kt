@@ -26,11 +26,22 @@ import androidx.compose.ui.unit.sp
 import com.lovegames.common.MoreGamesButton
 import com.lovegames.thirtysixforlove.ThirtySixQuestionsViewModel
 import com.lovegames.thirtysixforlove.R
+import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsTheme
 
 @Composable
 fun ThirtySixQuestionsTheyMightKissScreen(
     viewModel: ThirtySixQuestionsViewModel,
     navController: NavController
+) {
+    ThirtySixQuestionsTheme {
+        ThirtySixQuestionsTheyMightKissScreenContent(viewModel, navController)
+    }
+}
+
+@Composable
+private fun ThirtySixQuestionsTheyMightKissScreenContent(
+    viewModel: ThirtySixQuestionsViewModel,
+    navController: NavController,
 ) {
     val context = LocalContext.current
 

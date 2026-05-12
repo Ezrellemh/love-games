@@ -10,7 +10,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -24,9 +23,17 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.lovegames.thirtysixforlove.R
+import com.lovegames.thirtysixforlove.ui.ThirtySixQuestionsTheme
 
 @Composable
 fun ThirtySixQuestionsDisclaimerScreen(navController: NavController) {
+    ThirtySixQuestionsTheme {
+        ThirtySixQuestionsDisclaimerScreenContent(navController)
+    }
+}
+
+@Composable
+private fun ThirtySixQuestionsDisclaimerScreenContent(navController: NavController) {
     val context = LocalContext.current
 
     val annotatedString = buildAnnotatedString {
@@ -77,7 +84,7 @@ fun ThirtySixQuestionsDisclaimerScreen(navController: NavController) {
             Text(
                 text = stringResource(R.string.thirty_six_questions_title_36),
                 style = MaterialTheme.typography.headlineLarge.copy(fontFamily = FontFamily.Cursive),
-                color = Color.Red,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 44.sp
             )
 
@@ -86,7 +93,7 @@ fun ThirtySixQuestionsDisclaimerScreen(navController: NavController) {
             Text(
                 text = stringResource(R.string.thirty_six_questions_title_questions),
                 style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Cursive),
-                color = Color.Red,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 44.sp
             )
 

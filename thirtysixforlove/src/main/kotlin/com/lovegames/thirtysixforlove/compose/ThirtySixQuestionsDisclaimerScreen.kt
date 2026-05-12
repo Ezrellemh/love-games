@@ -15,6 +15,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -109,6 +111,12 @@ private fun ThirtySixQuestionsDisclaimerScreenContent(navController: NavControll
 
             ClickableText(
                 text = annotatedString,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    lineHeight = 26.sp,
+                    letterSpacing = 0.2.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center,
+                ),
                 onClick = { offset ->
                     annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
                         .firstOrNull()?.let { annotation ->
@@ -123,6 +131,12 @@ private fun ThirtySixQuestionsDisclaimerScreenContent(navController: NavControll
 
             ClickableText(
                 text = disclaimerString,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    lineHeight = 22.sp,
+                    letterSpacing = 0.2.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                ),
                 onClick = { offset ->
                     disclaimerString.getStringAnnotations(tag = "URL", start = offset, end = offset)
                         .firstOrNull()?.let { annotation ->
@@ -133,10 +147,22 @@ private fun ThirtySixQuestionsDisclaimerScreenContent(navController: NavControll
                 modifier = Modifier.padding(16.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Button(onClick = { navController.navigate("thirty_six_questions_instructions_screen") }) {
-                Text(text = stringResource(R.string.start_thirty_six_questions_game))
+            Button(
+                onClick = { navController.navigate("thirty_six_questions_instructions_screen") },
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 32.dp,
+                    vertical = 14.dp,
+                ),
+            ) {
+                Text(
+                    text = stringResource(R.string.start_thirty_six_questions_game),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.5.sp,
+                    ),
+                )
             }
         }
     }

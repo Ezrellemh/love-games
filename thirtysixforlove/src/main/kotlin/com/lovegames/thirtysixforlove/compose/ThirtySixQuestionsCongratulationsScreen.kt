@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,6 +95,10 @@ private fun ThirtySixQuestionsCongratulationsScreenContent(
         ) {
             Text(
                 text = stringResource(R.string.thirty_six_questions_congratulations),
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontFamily = FontFamily.Cursive,
+                ),
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(16.dp)
             )
@@ -100,6 +107,11 @@ private fun ThirtySixQuestionsCongratulationsScreenContent(
 
             Text(
                 text = stringResource(R.string.stare),
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    lineHeight = 26.sp,
+                    letterSpacing = 0.2.sp,
+                ),
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(16.dp)
             )
@@ -128,9 +140,16 @@ private fun ThirtySixQuestionsCongratulationsScreenContent(
             Button(
                 onClick = {
                     if (state.timerCompleted) navController.navigate("thirty_six_questions_they_might_kiss_screen")
-                }
+                },
+                contentPadding = PaddingValues(horizontal = 32.dp, vertical = 14.dp),
             ) {
-                Text(text = stringResource(R.string.thirty_six_questions_adventurous))
+                Text(
+                    text = stringResource(R.string.thirty_six_questions_adventurous),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.5.sp,
+                    ),
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

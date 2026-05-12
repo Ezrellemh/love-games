@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,8 +58,11 @@ private fun ThirtySixQuestionsTheyMightKissScreenContent(
         Text(
             modifier = Modifier.padding(16.dp),
             text = stringResource(R.string.thirty_six_questions_they_might_kiss),
-            fontSize = 24.sp,
-            maxLines = 2
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontFamily = FontFamily.Cursive,
+            ),
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -76,6 +82,12 @@ private fun ThirtySixQuestionsTheyMightKissScreenContent(
         ClickableText(
             modifier = Modifier.padding(16.dp),
             text = theyMightKissText,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                lineHeight = 26.sp,
+                letterSpacing = 0.2.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            ),
             onClick = { offset ->
                 theyMightKissText.getStringAnnotations(tag = "URL", start = offset, end = offset)
                     .firstOrNull()?.let { annotation ->

@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,14 +45,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -93,46 +92,14 @@ private fun ThirtySixQuestionsMainScreenContent(
     val symmetry = state.symmetry
     val currentQuestionIndexValue = currentQuestionIndex + 1
     val isEvenQuestion = currentQuestionIndexValue % 2 == 0
-    val isOddQuestion = currentQuestionIndexValue % 2 == 1
     val isQuestion11 = currentQuestionIndex == 10
     val color = if (isEvenQuestion || (state.playerTurnTimerCount >= 1 && isQuestion11)) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
 
-    val context = LocalContext.current
-    val resources = context.resources
-    val displayMetrics = resources.displayMetrics
-
-    // Function to convert pixel values to dp based on the device's density
-    fun pxToDp(px: Float): Dp {
-        return (px / (displayMetrics.densityDpi / 160f)).dp
-    }
-
-    val targetValueXInPx = when {
-        isQuestion11 && state.playerTurnTimerCount >= 1 && !symmetry -> 892f
-        isQuestion11 && state.playerTurnTimerCount >= 1 && symmetry -> 0f
-        !symmetry && isEvenQuestion -> 892f
-        else -> 0f
-    }
-
-    val targetValueYInPx = when {
-        isQuestion11 && state.playerTurnTimerCount >= 1 && !symmetry -> 2120f
-        isQuestion11 && state.playerTurnTimerCount >= 1 && symmetry -> 16f
-        symmetry && isOddQuestion || !symmetry -> 2120f
-        else -> 16f
-    }
-
-    // Convert pixel values to dp
-    val targetValueX = pxToDp(targetValueXInPx)
-    val targetValueY = pxToDp(targetValueYInPx)
-
-    val animatedX by animateDpAsState(
-        targetValue = targetValueX,
-        animationSpec = tween(durationMillis = 600)
-    )
-
-    val animatedY by animateDpAsState(
-        targetValue = targetValueY,
-        animationSpec = tween(durationMillis = 600)
-    )
+    // "Whose turn is it" — even questions naturally flip to the second
+    // player; Q11 also flips after its first sub-timer (so the second
+    // player can take their 4-minute life-story turn).
+    val isFlippedTurn = isEvenQuestion ||
+        (isQuestion11 && state.playerTurnTimerCount >= 1)
 
     val snackbarHostState = remember { SnackbarHostState() }
     val triggerSnackbar = remember { mutableStateOf(false) }
@@ -158,7 +125,7 @@ private fun ThirtySixQuestionsMainScreenContent(
         }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
@@ -174,6 +141,30 @@ private fun ThirtySixQuestionsMainScreenContent(
                 }
             }
     ) {
+        // Adaptive dot positioning. Instead of hard-coded pixel offsets
+        // (which only landed correctly on one specific device), anchor the
+        // dot to a corner with a consistent inset derived from the actual
+        // screen size we just got from BoxWithConstraints. animateDpAsState
+        // still smoothly interpolates between corners exactly as before —
+        // the target values just come from the real layout now.
+        val edgeInset = 16.dp
+        val dotSize = 24.dp
+        val placeRight = !symmetry && isFlippedTurn
+        val placeTop = symmetry && isFlippedTurn
+        val targetX = if (placeRight) maxWidth - dotSize - edgeInset else edgeInset
+        val targetY = if (placeTop) edgeInset else maxHeight - dotSize - edgeInset
+
+        val animatedX by animateDpAsState(
+            targetValue = targetX,
+            animationSpec = tween(durationMillis = 600),
+            label = "dot-x",
+        )
+        val animatedY by animateDpAsState(
+            targetValue = targetY,
+            animationSpec = tween(durationMillis = 600),
+            label = "dot-y",
+        )
+
         // Subtle, themed background icon for the current question.
         // Rendered first so it sits behind all other content.
         QuestionBackground(questionIndex = currentQuestionIndex)
@@ -205,8 +196,10 @@ private fun ThirtySixQuestionsMainScreenContent(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        val spacerHeight = 128f
-                        val spacerHeightInDp = pxToDp(spacerHeight)
+                        // Breathing room around the q11 timer in symmetry
+                        // mode. Density-independent dp instead of pixel
+                        // measurement so it stays consistent across screens.
+                        val spacerHeightInDp = 40.dp
                         if (symmetry) {
                             Spacer(modifier = Modifier.height(16.dp))
 
@@ -295,16 +288,12 @@ private fun ThirtySixQuestionsMainScreenContent(
             )
         }
 
-        // Define the bottom padding in pixels (can be any value you want to adjust)
-        val bottomPaddingInPx = 440f  // This is the pixel value for the bottom padding
-
-        // Convert the bottom padding from pixels to dp
-        val bottomPaddingInDp = pxToDp(bottomPaddingInPx)
-
-
+        // Place the non-symmetry q11 timer about 18% up from the bottom.
+        // This is roughly where the original 440px padding put it on the
+        // reference device but now adapts proportionally to any screen.
         Box(modifier = Modifier
             .align(Alignment.BottomCenter)
-            .padding(bottom = bottomPaddingInDp)
+            .padding(bottom = maxHeight * 0.18f)
         ) {
             // Show the Timer only on question 11 when symmetry is false
             if (
@@ -325,11 +314,13 @@ private fun ThirtySixQuestionsMainScreenContent(
             }
         }
 
+        // The animated turn-indicator dot. Its offset already includes
+        // the 16dp edge inset (folded into `targetX` / `targetY` above),
+        // so no inner padding is needed here.
         Box(
             modifier = Modifier
                 .offset(x = animatedX, y = animatedY)
-                .padding(16.dp)
-                .size(24.dp)
+                .size(dotSize)
                 .background(color = color, shape = CircleShape)
                 .then(
                     if (currentQuestionIndex == 0) {

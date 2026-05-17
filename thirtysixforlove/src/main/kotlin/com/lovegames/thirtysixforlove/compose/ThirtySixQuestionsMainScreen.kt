@@ -11,15 +11,19 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -103,14 +107,10 @@ private fun ThirtySixQuestionsMainScreenContent(
     val isFlippedTurn = isEvenQuestion ||
         (isQuestion11 && state.playerTurnTimerCount >= 1)
 
-    // Screen dimensions used to position the animated dot and the q11
-    // timer adaptively. LocalConfiguration gives us the app's available
-    // dp size directly — simpler than BoxWithConstraints for this case
-    // (the outer container is fillMaxSize anyway) and avoids the
-    // false-positive "UnusedBoxWithConstraintsScope" lint warning.
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val screenHeight = configuration.screenHeightDp.dp
+    // Used to position the non-symmetry q11 timer as a fraction of screen
+    // height. (The dot's positioning is handled separately by its own
+    // safe-area-aware BoxWithConstraints below.)
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     val snackbarHostState = remember { SnackbarHostState() }
     val triggerSnackbar = remember { mutableStateOf(false) }
@@ -162,30 +162,6 @@ private fun ThirtySixQuestionsMainScreenContent(
                 }
             }
     ) {
-        // Adaptive dot positioning. Instead of hard-coded pixel offsets
-        // (which only landed correctly on one specific device), anchor the
-        // dot to a corner with a consistent inset derived from the actual
-        // screen size. animateDpAsState still smoothly interpolates between
-        // corners exactly as before — the target values just come from the
-        // device's real screen dimensions now.
-        val edgeInset = 16.dp
-        val dotSize = 24.dp
-        val placeRight = !symmetry && isFlippedTurn
-        val placeTop = symmetry && isFlippedTurn
-        val targetX = if (placeRight) screenWidth - dotSize - edgeInset else edgeInset
-        val targetY = if (placeTop) edgeInset else screenHeight - dotSize - edgeInset
-
-        val animatedX by animateDpAsState(
-            targetValue = targetX,
-            animationSpec = tween(durationMillis = 600),
-            label = "dot-x",
-        )
-        val animatedY by animateDpAsState(
-            targetValue = targetY,
-            animationSpec = tween(durationMillis = 600),
-            label = "dot-y",
-        )
-
         // Subtle, themed background icon for the current question.
         // Rendered first so it sits behind all other content.
         QuestionBackground(questionIndex = currentQuestionIndex)
@@ -335,21 +311,18 @@ private fun ThirtySixQuestionsMainScreenContent(
             }
         }
 
-        // The animated turn-indicator dot. Its offset already includes
-        // the 16dp edge inset (folded into `targetX` / `targetY` above),
-        // so no inner padding is needed here.
-        Box(
-            modifier = Modifier
-                .offset(x = animatedX, y = animatedY)
-                .size(dotSize)
-                .background(color = color, shape = CircleShape)
-                .then(
-                    if (currentQuestionIndex == 0) {
-                        Modifier.clickable {
-                            triggerSnackbar.value = true // Set the trigger to launch the snackbar
-                        }
-                    } else Modifier
-                )
+        // The animated turn-indicator dot, anchored to the SAFE-DRAWING
+        // corners on every device (never under the status bar or
+        // gesture-nav pill). Extracted into its own composable so we can
+        // suppress the false-positive UnusedBoxWithConstraintsScope lint
+        // there in isolation — we do read maxWidth/maxHeight inside it,
+        // but the lint's pattern matcher doesn't always recognize it.
+        TurnIndicatorDot(
+            color = color,
+            placeRight = !symmetry && isFlippedTurn,
+            placeTop = symmetry && isFlippedTurn,
+            isClickable = currentQuestionIndex == 0,
+            onClick = { triggerSnackbar.value = true },
         )
 
         CustomSnackbarHost(
@@ -451,6 +424,60 @@ private fun NavigationArrowButton(
                 modifier = Modifier.size(26.dp),
             )
         }
+    }
+}
+
+/**
+ * The little animated colored circle that indicates whose turn it is.
+ * Lives in the safe-drawing area so it sits 16dp inside the actually-
+ * visible content corners on every device (no status-bar or gesture-nav
+ * overlap), and animates smoothly between the four corners as the game
+ * state (parity / symmetry / Q11 progress) flips.
+ *
+ * @Suppress for the lint here is intentional: `UnusedBoxWithConstraintsScope`
+ * is a known false-positive in some lint versions when the scope members
+ * are read inside conditional expressions, which is what this composable
+ * does. maxWidth and maxHeight ARE used to derive `targetX`/`targetY`.
+ */
+@Suppress("UnusedBoxWithConstraintsScope")
+@Composable
+private fun TurnIndicatorDot(
+    color: Color,
+    placeRight: Boolean,
+    placeTop: Boolean,
+    isClickable: Boolean,
+    onClick: () -> Unit,
+) {
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing),
+    ) {
+        val edgeInset = 16.dp
+        val dotSize = 24.dp
+        val targetX = if (placeRight) maxWidth - dotSize - edgeInset else edgeInset
+        val targetY = if (placeTop) edgeInset else maxHeight - dotSize - edgeInset
+
+        val animatedX by animateDpAsState(
+            targetValue = targetX,
+            animationSpec = tween(durationMillis = 600),
+            label = "dot-x",
+        )
+        val animatedY by animateDpAsState(
+            targetValue = targetY,
+            animationSpec = tween(durationMillis = 600),
+            label = "dot-y",
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = animatedX, y = animatedY)
+                .size(dotSize)
+                .background(color = color, shape = CircleShape)
+                .then(
+                    if (isClickable) Modifier.clickable(onClick = onClick) else Modifier
+                )
+        )
     }
 }
 

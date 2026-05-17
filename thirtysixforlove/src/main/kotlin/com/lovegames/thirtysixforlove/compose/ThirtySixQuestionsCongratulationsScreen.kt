@@ -1,6 +1,8 @@
 package com.lovegames.thirtysixforlove.compose
 
 import android.media.MediaPlayer
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -74,15 +76,24 @@ private fun ThirtySixQuestionsCongratulationsScreenContent(
             .fillMaxSize()
             .padding(16.dp)
             .pointerInput(Unit) {
-                // Observe at the Initial pass so we toggle fast-forward without
-                // consuming the touch — the timer heart / buttons still react
-                // to their own taps. While any pointer is down, the stare timer
-                // runs at 2x speed.
-                awaitPointerEventScope {
-                    while (true) {
+                // Observe each gesture at the Initial pass to toggle fast-
+                // forward without consuming the touch — the timer heart /
+                // buttons still react to their own taps. While any pointer
+                // is down, the stare timer runs at 2x. awaitEachGesture
+                // wraps awaitPointerEventScope with proper looping +
+                // cancellation handling so no events are dropped.
+                awaitEachGesture {
+                    awaitFirstDown(
+                        requireUnconsumed = false,
+                        pass = PointerEventPass.Initial,
+                    )
+                    viewModel.setFastForward(true)
+                    var anyPressed: Boolean
+                    do {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
-                        viewModel.setFastForward(event.changes.any { it.pressed })
-                    }
+                        anyPressed = event.changes.any { it.pressed }
+                    } while (anyPressed)
+                    viewModel.setFastForward(false)
                 }
             },
         verticalArrangement = Arrangement.Center,

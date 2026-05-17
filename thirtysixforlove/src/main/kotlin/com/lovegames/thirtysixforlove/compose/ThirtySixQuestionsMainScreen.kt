@@ -7,9 +7,10 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,6 +46,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -101,6 +103,15 @@ private fun ThirtySixQuestionsMainScreenContent(
     val isFlippedTurn = isEvenQuestion ||
         (isQuestion11 && state.playerTurnTimerCount >= 1)
 
+    // Screen dimensions used to position the animated dot and the q11
+    // timer adaptively. LocalConfiguration gives us the app's available
+    // dp size directly — simpler than BoxWithConstraints for this case
+    // (the outer container is fillMaxSize anyway) and avoids the
+    // false-positive "UnusedBoxWithConstraintsScope" lint warning.
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+
     val snackbarHostState = remember { SnackbarHostState() }
     val triggerSnackbar = remember { mutableStateOf(false) }
     val keepTrack = stringResource(id = R.string.keep_track)
@@ -125,34 +136,44 @@ private fun ThirtySixQuestionsMainScreenContent(
         }
     }
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-                // Observe every touch at the Initial pass so we see it before
-                // children (back/forward/symmetry buttons) without consuming it —
-                // they still get their own events as normal. While any pointer
-                // is down anywhere on the screen, the timer runs at 2x.
-                awaitPointerEventScope {
-                    while (true) {
+                // Observe every gesture cycle to toggle fast-forward without
+                // consuming the touch. We watch at the Initial pass so we see
+                // the press before children (back/forward/symmetry buttons),
+                // and we never call change.consume(), so child clickables
+                // still receive their events as normal. awaitEachGesture
+                // wraps awaitPointerEventScope with proper cancellation +
+                // looping so no events are dropped between gestures.
+                awaitEachGesture {
+                    awaitFirstDown(
+                        requireUnconsumed = false,
+                        pass = PointerEventPass.Initial,
+                    )
+                    viewModel.setFastForward(true)
+                    var anyPressed: Boolean
+                    do {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
-                        viewModel.setFastForward(event.changes.any { it.pressed })
-                    }
+                        anyPressed = event.changes.any { it.pressed }
+                    } while (anyPressed)
+                    viewModel.setFastForward(false)
                 }
             }
     ) {
         // Adaptive dot positioning. Instead of hard-coded pixel offsets
         // (which only landed correctly on one specific device), anchor the
         // dot to a corner with a consistent inset derived from the actual
-        // screen size we just got from BoxWithConstraints. animateDpAsState
-        // still smoothly interpolates between corners exactly as before —
-        // the target values just come from the real layout now.
+        // screen size. animateDpAsState still smoothly interpolates between
+        // corners exactly as before — the target values just come from the
+        // device's real screen dimensions now.
         val edgeInset = 16.dp
         val dotSize = 24.dp
         val placeRight = !symmetry && isFlippedTurn
         val placeTop = symmetry && isFlippedTurn
-        val targetX = if (placeRight) maxWidth - dotSize - edgeInset else edgeInset
-        val targetY = if (placeTop) edgeInset else maxHeight - dotSize - edgeInset
+        val targetX = if (placeRight) screenWidth - dotSize - edgeInset else edgeInset
+        val targetY = if (placeTop) edgeInset else screenHeight - dotSize - edgeInset
 
         val animatedX by animateDpAsState(
             targetValue = targetX,
@@ -293,7 +314,7 @@ private fun ThirtySixQuestionsMainScreenContent(
         // reference device but now adapts proportionally to any screen.
         Box(modifier = Modifier
             .align(Alignment.BottomCenter)
-            .padding(bottom = maxHeight * 0.18f)
+            .padding(bottom = screenHeight * 0.18f)
         ) {
             // Show the Timer only on question 11 when symmetry is false
             if (
